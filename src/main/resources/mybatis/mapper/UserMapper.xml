@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.min.cinemagreen.user.mapper.IUserMapper">
+
+  <insert id="insertUser" parameterType="UserDTO">
+    INSERT INTO user_t (
+        user_no
+      , email
+      , pw
+      , name
+      , gender
+      , mobile
+      , sns
+      , pw_modify_dt
+      , signup_dt
+      , birthyear
+      , age
+      , postcode
+      , address
+      , detail_address
+      , extra_address
+      , grade
+      , profile_name
+      , profile_path
+    ) VALUES (
+        user_seq.NEXTVAL
+      , #{email}
+      , #{pw}
+      , #{name}
+      , #{gender}
+      , #{mobile}
+      , #{sns}
+      , CURRENT_DATE
+      , CURRENT_DATE
+      , #{birthYear}
+      , #{age}
+      , #{postcode}
+      , #{address}
+      , #{detailAddress}
+      , #{extraAddress}
+      , #{grade}
+      , #{profileName}
+      , #{profilePath}
+    )
+  </insert>
+  
+  <select id="getUserByMap" parameterType="Map" resultType="UserDTO">
+    SELECT user_no, email, pw, name, gender, grade, mobile, sns, pw_modify_dt, signup_dt, birthyear, age, postcode, address, detail_address, extra_address, profile_name, profile_path           
+      FROM user_t
+    <where> 
+      <if test="email != null">email = #{email}</if>
+      <if test="pw != null">AND pw = #{pw}</if>
+    </where>
+  </select>
+  
+  <insert id="insertAccess" parameterType="Map">
+    INSERT INTO access_t (
+        access_no
+      , email
+      , ip
+      , user_agent
+      , signin_dt
+    ) VALUES (
+        access_seq.NEXTVAL
+      , #{email}
+      , #{ip}
+      , #{userAgent}
+      , CURRENT_DATE
+    )
+  </insert>
+  
+  <delete id="deleteUser" parameterType="int">
+    DELETE
+      FROM user_t
+     WHERE user_no = #{userNo}
+  </delete>
+  
+  <update id="updateInf" parameterType="UserDTO" >
+    UPDATE user_t
+       SET name = #{name}
+         , mobile = #{mobile}
+         , birthyear = #{birthYear}
+         , age = #{age}
+         , postcode = #{postcode}
+         , address = #{address}
+         , detail_address = #{detailAddress}
+         , extra_address = #{extraAddress}
+     WHERE user_no = #{userNo}
+  </update>
+  
+  
+  <update id="pwchange" parameterType="Map" >
+    UPDATE user_t
+       SET pw = #{pw}
+         , pw_modify_dt = CURRENT_DATE
+    WHERE 
+      user_no = #{userNo}
+       AND pw = #{oldpw}
+  </update>
+  
+  
+  <update id="pwupdate" parameterType="Map" >
+    UPDATE user_t
+       SET pw = #{pw}
+         , pw_modify_dt = CURRENT_DATE
+    WHERE  email = #{email}
+  </update>
+  
+  <select id="emailfindDo" parameterType="Map" resultType="UserDTO">
+    SELECT email           
+      FROM user_t
+     WHERE mobile = #{mobile}
+  </select>
+  
+  <select id="overlapcheckDo" parameterType="UserDTO" resultType="UserDTO">
+    SELECT email           
+      FROM user_t
+     WHERE email = #{email}
+  </select>
+
+  <insert id="insertSnsUser" parameterType="UserDTO">
+    INSERT INTO user_t (
+        user_no
+      , email
+      , name
+      , gender
+      , mobile
+      , sns
+      , signup_dt
+      , birthyear
+      , age
+      , postcode
+      , address
+      , detail_address
+      , extra_address
+      , profile_name
+      , profile_path
+    ) VALUES (
+        user_seq.NEXTVAL
+      , #{email}
+      , #{name}
+      , #{gender}
+      , #{mobile}
+      , #{sns}
+      , CURRENT_DATE
+      , #{birthYear}
+      , #{age}
+      , #{postcode}
+      , #{address}
+      , #{detailAddress}
+      , #{extraAddress}
+      , #{profileName}
+      , #{profilePath}
+    )
+  </insert>
+  
+  <select id="getsnsUserInfo" parameterType="UserDTO" resultType="UserDTO">
+    SELECT user_no, email, name, mobile, sns, signup_dt, grade, birthyear, age, postcode, address, detail_address, extra_address, profile_name, profile_path        
+      FROM user_t
+     WHERE email = #{email}
+  </select>
+  
+  <update id="ageUpdate" parameterType="UserDTO" >
+    UPDATE user_t
+       SET age = #{age}
+    WHERE  user_no = #{userNo}
+  </update>
+  
+  
+  <update id="updateprofile" parameterType="Map" >
+    UPDATE user_t
+       SET profile_name = #{profileName}
+         , profile_path = #{profilePath}
+    WHERE  user_no = #{userNo}
+  </update>
+  
+  <select id="getBirthUserList" parameterType="UserDTO" resultType="UserDTO">
+    SELECT user_no, age, birthyear, email, name
+      FROM user_t
+     WHERE birthyear LIKE '%' || #{birthYear}
+  </select>
+  
+<!-- 티켓 부분 -->  
+  <!-- 티켓 정보 만들기 -->
+  <select id="getTicketCount" resultType="int">
+    SELECT COUNT(*) AS total_count
+      FROM 
+          user_t U 
+      JOIN  
+          ticketing_t T ON U.user_no = T.user_no
+      JOIN 
+          payment_t P ON T.ticketing_no = P.ticketing_no
+      JOIN 
+          movie_t M ON T.movie_no = M.movie_no
+      JOIN 
+          runtime_t R ON T.time_no = R.time_no
+      JOIN 
+          occupied_seat_t O ON T.ticketing_no = O.ticketing_no
+      WHERE  
+    U.user_no = #{userNo}
+  </select>
+  
+  
+  
+  <select id="getUserTicketList" parameterType="Map" resultType="UserTicketDTO">
+	  SELECT 
+	    movie_nm,
+	    runtime,
+	    start_time,
+	    seat_code,
+	    amount,
+	    pay_state,
+	    person_count
+		FROM (
+		    SELECT 
+		        ROW_NUMBER() OVER(ORDER BY T.ticketing_no DESC) AS rnum,
+		        M.movie_nm,
+		        M.runtime,
+		        R.start_time,
+		        O.seat_code,
+		        P.amount,
+		        P.pay_state,
+		        T.person_count
+		    FROM 
+		        user_t U 
+		    JOIN  
+		        ticketing_t T ON U.user_no = T.user_no
+		    JOIN 
+		        payment_t P ON T.ticketing_no = P.ticketing_no
+		    JOIN 
+		        movie_t M ON T.movie_no = M.movie_no
+		    JOIN 
+		        runtime_t R ON T.time_no = R.time_no
+		    JOIN 
+		        occupied_seat_t O ON T.ticketing_no = O.ticketing_no
+		    WHERE  
+		        U.user_no = #{userNo}
+		) 
+		WHERE rnum BETWEEN #{begin} AND #{end}
+  </select> 
+  
+  <select id="getTicketDetail" parameterType="Map" resultType="UserTicketDTO">
+    SELECT M.movie_nm, M.runtime, M.rating, R.start_time, O.seat_code, T.ticket_dt, T.person_count, P.pay_method, P.amount, P.pay_state, P.cancel_dt, P.cancel_status
+    
+      FROM ticketing_t T 
+      JOIN runtime_t R ON T.time_no = R.time_no
+      JOIN payment_t P ON T.ticketing_no = P.ticketing_no
+      JOIN occupied_seat_t O ON T.ticketing_no = O.ticketing_no
+      JOIN movie_t M ON T.movie_no = M.movie_no
+          
+     WHERE M.movie_nm = #{movieNm}
+       AND R.start_time = #{startTime}
+       AND O.seat_code = #{seatCode}
+  </select>
+  
+  
+  <update id="cancelRequest" parameterType="Map" >
+		UPDATE payment_t P
+		SET P.cancel_status = #{cancelStatus}
+		WHERE P.ticketing_no IN (
+		    SELECT T.ticketing_no
+		    FROM ticketing_t T 
+		    JOIN runtime_t R ON T.time_no = R.time_no
+		    JOIN occupied_seat_t O ON T.ticketing_no = O.ticketing_no
+		    JOIN movie_t M ON T.movie_no = M.movie_no
+		    WHERE M.movie_nm = #{movieNm}
+		      AND R.start_time = #{startTime}
+		      AND O.seat_code = #{seatCode}
+		)
+  </update>
+  
+<!-- 등급 만들기 -->
+  <select id="getAmounts" parameterType="Map" resultType="UserTicketDTO">
+    SELECT amount
+      FROM payment_t
+     WHERE user_no = #{userNo}
+       AND cancel_status IS NULL
+       AND pay_dt BETWEEN #{startDate} AND #{endDate}
+  </select>
+  
+  <update id="updateUserGrade" parameterType="Map" >
+    UPDATE user_t
+       SET grade = #{grade}
+    WHERE  user_no = #{userNo}
+  </update>
+  
+<!-- 블로그 부분 -->  
+  <select id="getBlogCount" resultType="int">
+    SELECT COUNT(*)
+      FROM blog_t
+     WHERE user_no = #{userNo}
+  </select>
+  
+  <select id="userGetBlogList" parameterType="Map" resultType="BlogDTO">
+    SELECT blog_no, title, contents, hit, user_no, create_dt, modify_dt, name, email, new_comment
+      FROM (SELECT ROW_NUMBER() OVER(ORDER BY blog_no DESC) AS rnum, B.blog_no, B.title, B.contents, B.hit, B.user_no, B.create_dt, B.modify_dt, U.name, U.email, B.new_comment
+              FROM user_t U INNER JOIN blog_t B
+                ON U.user_no = B.user_no 
+             WHERE U.user_no = #{userNo})
+     WHERE rnum BETWEEN #{begin} AND #{end}
+  </select>
+  
+  
+</mapper>

@@ -1,0 +1,26 @@
+small, .small {
+  font-size: 0.875em;
+}
+
+  .width4 > * { /* ul.v_con.four_con */
+    flex: 0 0 auto;
+    width: 25%;
+  }
+
+.btn {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+
+.badge {
+  display: inline-block;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+} 
+

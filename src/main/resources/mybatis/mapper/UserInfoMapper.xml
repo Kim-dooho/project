@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.min.cinemagreen.admin.mapper.IUserInfoMapper">
+
+  <insert id="adminInsertUser" parameterType="UserInfoDTO">
+    INSERT INTO user_t (
+        user_no
+      , email
+      , pw
+      , name
+      , gender
+      , mobile
+      , sns
+      , pw_modify_dt
+      , signup_dt
+      , birthyear
+      , age
+      , postcode
+      , address
+      , detail_address
+      , extra_address
+    ) VALUES (
+        user_seq.NEXTVAL
+      , #{email}
+      , #{pw}
+      , #{name}
+      , #{gender}
+      , #{mobile}
+      , #{sns}
+      , CURRENT_DATE
+      , CURRENT_DATE
+      , #{birthyear}
+      , #{age}
+      , #{postcode}
+      , #{address}
+      , #{detailAddress}
+      , #{extraAddress}
+    )
+  </insert>
+
+  <select id="getUserList" resultType="UserInfoDTO">
+    SELECT user_no
+         , email
+         , pw
+         , name
+         , gender
+         , grade
+         , mobile
+         , sns
+         , pw_modify_dt
+         , signup_dt
+         , birthyear
+         , age
+         , postcode
+         , address
+         , detail_address
+         , extra_address
+         , profile_name
+         , profile_path           
+      FROM user_t
+      ORDER BY
+          user_no DESC
+  </select>
+  
+  <!-- 사용자 번호에 해당하는 정보 조회 -->
+  <select id="getUserById" parameterType="int" resultType="UserInfoDTO">
+    SELECT
+       user_no
+     , email
+     , pw
+     , name
+     , gender
+     , grade
+     , mobile
+     , sns
+     , pw_modify_dt
+     , signup_dt
+     , birthyear
+     , age
+     , postcode
+     , address
+     , detail_address
+     , extra_address
+     , profile_name
+     , profile_path        
+    FROM user_t
+    WHERE
+        user_no = #{userNo}
+  </select>
+    
+  
+	<update id="adminUpdateUser" parameterType="UserInfoDTO">
+	  UPDATE user_t
+	  SET name = #{name}, 
+	  mobile = #{mobile}, 
+	  gender = #{gender}, 
+	  birthyear = #{birthyear},
+	  signup_dt = #{signupDt},
+	  postcode = #{postcode}, 
+	  address = #{address}, 
+	  extra_address = #{extraAddress}, 
+	  detail_address = #{detailAddress}
+	  WHERE user_no = #{userNo}
+	</update>
+	
+	<update id="adminUpdateprofile" parameterType="Map" >
+    UPDATE user_t
+       SET profile_name = #{profileName}
+         , profile_path = #{profilePath}
+    WHERE  user_no = #{userNo}
+  </update>
+	
+  
+  <delete id="adminDeleteUser" parameterType="int">
+    DELETE
+      FROM user_t
+    WHERE user_no = #{userNo}
+  </delete>
+  
+  <select id="doubleEmailCheckDo" parameterType="UserInfoDTO" resultType="UserInfoDTO">
+    SELECT email           
+      FROM user_t
+     WHERE email = #{email}
+  </select>
+  
+  <select id="getAmountList" resultType="AmountDTO"> <!-- 일일 매출 가져오기 -->
+  <!--
+	SELECT
+	  m.movie_nm,
+	  p.pay_dt,
+	  SUM(p.amount) AS total_amount
+	FROM
+	  payment_t p
+	INNER JOIN ticketing_t t ON p.ticketing_no = t.ticketing_no
+	INNER JOIN movie_t m ON t.movie_no = m.movie_no
+	WHERE
+	  TO_DATE(p.pay_dt, 'YY/MM/DD') = TRUNC(SYSDATE)
+	GROUP BY
+	  m.movie_no, m.movie_nm, p.pay_dt
+	ORDER BY
+	  total_amount DESC
+	-->
+	  
+  SELECT
+    m.movie_nm,
+    SUM(p.amount) AS total_amount
+  FROM
+    payment_t p
+  INNER JOIN ticketing_t t ON p.ticketing_no = t.ticketing_no
+  INNER JOIN movie_t m ON t.movie_no = m.movie_no
+  WHERE
+    TO_DATE(p.pay_dt, 'YY/MM/DD') = TRUNC(SYSDATE)
+  GROUP BY
+    m.movie_no, m.movie_nm
+  ORDER BY
+    total_amount DESC
+
+  </select>
+  
+  <select id="getWeeklyAmountList" resultType="AmountDTO"> <!-- 최근 일주일 매출 가져오기 p.pay_dt >= TRUNC(SYSDATE) - 6
+                                                                                          최근 7일 동안의 데이터 (오늘 포함)-->
+    SELECT
+      TRUNC(p.pay_dt) AS pay_date,
+      SUM(p.amount) AS total_amount
+    FROM
+      payment_t p
+    INNER JOIN ticketing_t t ON p.ticketing_no = t.ticketing_no
+    INNER JOIN movie_t m ON t.movie_no = m.movie_no
+    WHERE
+      p.pay_dt >= TRUNC(SYSDATE) - 6
+    GROUP BY
+      TRUNC(p.pay_dt)
+    ORDER BY
+      pay_date ASC
+  </select>
+  
+  
+  
+  
+  
+  
+  
+  
+</mapper>
